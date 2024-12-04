@@ -24,6 +24,16 @@ run-image:
 .PHONY: build-and-run-image
 build-and-run-image: build-image run-image
 
+.PHONY: run-image-comp
+run-image-comp:
+ -mkdir must-gather/
+ oc config view --minify --raw > kubeconfig
+ ${CONTAINER_ENGINE} run -v $(PWD)/kubeconfig:/kube/config --env KUBECONFIG=/kube/config \
+  -v $(PWD)/must-gather:/must-gather $(REGISTRY)/$(IMG):$(TAG) --comp=$(COMP)
+
+# Example usage:
+# make run-image-comp COMP=obs
+
 ############################################################
 # build section
 ############################################################

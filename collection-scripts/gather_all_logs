@@ -5,26 +5,47 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 source ${SCRIPT_DIR}/gather_utils
 
-# Store PIDs of all the subprocesses
-pids=()
+COMPONENT=""
 
-${SCRIPT_DIR}/gather_mce_logs &
-pids+=($!)
+# Parse command line arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --comp) COMPONENT="$2"; shift ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
 
-${SCRIPT_DIR}/gather_hub_logs &
-pids+=($!)
+# Run gather scripts based on the component argument
+if [[ -z "$COMPONENT" || "$COMPONENT" == "mce" ]]; then
+    ${SCRIPT_DIR}/gather_mce_logs &
+    pids+=($!)
+fi
 
-${SCRIPT_DIR}/gather_observability_logs &
-pids+=($!)
+if [[ -z "$COMPONENT" || "$COMPONENT" == "hub" ]]; then
+    ${SCRIPT_DIR}/gather_hub_logs &
+    pids+=($!)
+fi
 
-${SCRIPT_DIR}/gather_application_lifecycle_logs &
-pids+=($!)
+if [[ -z "$COMPONENT" || "$COMPONENT" == "obs" ]]; then
+    ${SCRIPT_DIR}/gather_observability_logs &
+    pids+=($!)
+fi
 
-${SCRIPT_DIR}/gather_dr_logs &
-pids+=($!)
+if [[ -z "$COMPONENT" || "$COMPONENT" == "app" ]]; then
+    ${SCRIPT_DIR}/gather_application_lifecycle_logs &
+    pids+=($!)
+fi
 
-${SCRIPT_DIR}/gather_governance_logs &
-pids+=($!)
+if [[ -z "$COMPONENT" || "$COMPONENT" == "dr" ]]; then
+    ${SCRIPT_DIR}/gather_dr_logs &
+    pids+=($!)
+fi
+
+if [[ -z "$COMPONENT" || "$COMPONENT" == "gov" ]]; then
+    ${SCRIPT_DIR}/gather_governance_logs &
+    pids+=($!)
+fi
 
 # Check if PID array has any values, if so, wait for them to finish
 if [ ${#pids[@]} -ne 0 ]; then
